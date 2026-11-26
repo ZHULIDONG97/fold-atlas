@@ -66,7 +66,7 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
 </div></header>
 <main class="wrap">
   <div class="intro"><div><h1>Modified square twist</h1>
-    <p data-en="Drag the point to follow a path. Drag empty space to rotate, or scroll to zoom.">拖动选点沿弧移动，拖动空白处旋转视角，滚轮缩放。</p></div>
+    <p data-en="Drag the point to follow a path. Drag empty space to rotate. Scroll or pinch to zoom.">拖动选点沿弧移动，拖动空白处旋转视角，滚轮或双指捏合缩放。</p></div>
     <div class="counts"><div><strong>35</strong><small data-en="Paths">运动路径</small></div><div><strong>6</strong><small data-en="Endpoint poses">端点构型</small></div></div>
   </div>
   <div class="workbench">
@@ -537,6 +537,21 @@ function installPointer(canvas,key) {
   $(key+"-reset").onclick=()=>{const [az,el]=initialCamera[key];cameras[key]={az,el,zoom:1};repaint();};
 }
 installPointer(graph,"graph");installPointer(model,"model");
+
+function installPinch(canvas,key){
+  const touches=new Map();let start=null;
+  const box=canvas.parentElement;
+  const dist=()=>{const [a,b]=[...touches.values()];return Math.hypot(a[0]-b[0],a[1]-b[1]);};
+  box.addEventListener("pointerdown",e=>{if(e.pointerType!=="touch")return;touches.set(e.pointerId,[e.clientX,e.clientY]);
+    if(touches.size===2){start={d:dist(),zoom:cameras[key].zoom};e.stopPropagation();}},true);
+  box.addEventListener("pointermove",e=>{if(!touches.has(e.pointerId))return;touches.set(e.pointerId,[e.clientX,e.clientY]);
+    if(start&&touches.size===2){e.stopPropagation();e.preventDefault();
+      cameras[key].zoom=clamp(start.zoom*dist()/Math.max(start.d,1),.55,3.2);
+      if(key==="graph"){graphLayer=null;drawGraph();}else drawModel();}},true);
+  const end=e=>{touches.delete(e.pointerId);if(touches.size<2)start=null;};
+  box.addEventListener("pointerup",end,true);box.addEventListener("pointercancel",end,true);
+}
+installPinch(graph,"graph");installPinch(model,"model");
 $("help").onclick=()=>$("guide").showModal();$("close-help").onclick=()=>$("guide").close();
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();});
 new ResizeObserver(()=>{graphLayer=null;drawGraph();drawModel();}).observe($("graph").parentElement);
