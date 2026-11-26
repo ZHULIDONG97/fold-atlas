@@ -54,7 +54,6 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
 .pattern-key i.k-flat{border-top:2px dashed #8a9b92}
 .pattern-angles{font:.8rem/1.9 var(--mono);color:var(--muted);margin:6px 0 0}
 @media(max-width:760px){.pattern-grid{grid-template-columns:1fr}#pattern{max-width:440px;margin:auto}}
-.view-tools{display:flex;flex-direction:column;gap:6px}.view-tools button{touch-action:manipulation}
 </style>
 </head>
 <body>
@@ -67,7 +66,7 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
 </div></header>
 <main class="wrap">
   <div class="intro"><div><h1>Modified square twist</h1>
-    <p data-en="Drag the point to follow a path. Drag empty space to rotate. Zoom with the scroll wheel or the + / − buttons.">拖动选点沿弧移动，拖动空白处旋转视角，滚轮或 + / − 按钮缩放。</p></div>
+    <p data-en="Drag the point to follow a path. Drag empty space to rotate, or scroll to zoom.">拖动选点沿弧移动，拖动空白处旋转视角，滚轮缩放。</p></div>
     <div class="counts"><div><strong>35</strong><small data-en="Paths">运动路径</small></div><div><strong>6</strong><small data-en="Endpoint poses">端点构型</small></div></div>
   </div>
   <div class="workbench">
@@ -76,7 +75,7 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
         <button data-group="all" data-en="All" aria-pressed="true">全部</button><button data-group="local" data-en="Through flat" aria-pressed="false">平展态</button><button data-group="remote" data-en="Remote" aria-pressed="false">远端弧</button>
       </div></div>
       <div class="viewport graph-box"><canvas id="graph" data-en-label="Fold-angle paths in h1, h5 and h9. Drag a point or use the path progress slider." aria-label="h1、h5、h9 折角路径图。可直接拖动曲线上的点，也可使用下方进度滑块。"></canvas>
-        <div class="view-tools"><button id="graph-zoom-in" data-en-label="Zoom in path view" title="放大路径视图" aria-label="放大路径视图">+</button><button id="graph-zoom-out" data-en-label="Zoom out path view" title="缩小路径视图" aria-label="缩小路径视图">−</button><button id="graph-reset" data-en-label="Reset path view" title="复位路径视角" aria-label="复位路径视角">↺</button></div>
+        <div class="view-tools"><button id="graph-reset" data-en-label="Reset path view" title="复位路径视角" aria-label="复位路径视角">↺</button></div>
         <span id="tooltip" class="tooltip" hidden></span>
       </div>
       <div class="graph-key"><span><i class="stroke"></i><span data-en="No interior crossing">无内部穿透</span></span><span><i class="stroke dash"></i><span data-en="Panels cross">面板穿透</span></span><span><i class="junction"></i><span data-en="Junction">端点</span></span></div>
@@ -84,7 +83,7 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
     <section class="panel pose-panel" aria-labelledby="pose-title">
       <div class="bar"><h2 id="pose-title" data-en="Folded shape">折纸构型</h2><span class="status" id="status"></span></div>
       <div class="viewport model-box"><canvas id="model" data-en-label="Folded paper at the selected sample. Drag to rotate." aria-label="当前采样步的三维纸模型，可拖动旋转"></canvas>
-        <div class="view-tools"><button id="model-zoom-in" data-en-label="Zoom in model view" title="放大构型视图" aria-label="放大构型视图">+</button><button id="model-zoom-out" data-en-label="Zoom out model view" title="缩小构型视图" aria-label="缩小构型视图">−</button><button id="model-reset" data-en-label="Reset model view" title="复位构型视角" aria-label="复位构型视角">↺</button></div>
+        <div class="view-tools"><button id="model-reset" data-en-label="Reset model view" title="复位构型视角" aria-label="复位构型视角">↺</button></div>
         <span class="model-key"><i></i><span data-en="Fixed panel">固定面板</span></span>
       </div>
       <div class="readouts" role="group" data-en-label="Fold angles at the selected sample" aria-label="当前显示的三个折角">
@@ -538,8 +537,6 @@ function installPointer(canvas,key) {
   $(key+"-reset").onclick=()=>{const [az,el]=initialCamera[key];cameras[key]={az,el,zoom:1};repaint();};
 }
 installPointer(graph,"graph");installPointer(model,"model");
-function zoomBy(key,f){cameras[key].zoom=clamp(cameras[key].zoom*f,.55,3.2);if(key==="graph"){graphLayer=null;drawGraph();}else drawModel();}
-for(const key of ["graph","model"]){$(key+"-zoom-in").onclick=()=>zoomBy(key,1.25);$(key+"-zoom-out").onclick=()=>zoomBy(key,0.8);}
 $("help").onclick=()=>$("guide").showModal();$("close-help").onclick=()=>$("guide").close();
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();});
 new ResizeObserver(()=>{graphLayer=null;drawGraph();drawModel();}).observe($("graph").parentElement);
