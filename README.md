@@ -4,3 +4,5 @@ Interactive atlas of the 35 rigid folding paths of the modified square twist (th
 path plot in (h1, h5, h9), 3D configuration at the selected sample, and the flat crease pattern with merge sets.
 
 Online: https://zhulidong97.github.io/fold-atlas/
+
+Second example (two vertices + an off-line vertex, 5 closed branches named by complex seeds): https://zhulidong97.github.io/fold-atlas/dmv3/
