@@ -126,7 +126,7 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
   <div class="about">
   <h3 data-en="Using the page">页面操作</h3>
   <dl><dt data-en="Select and drag">选择与拖动</dt><dd data-en="Select a curve and drag the round handle along it. Use the slider or its arrow keys to step through the samples. Drag empty space to rotate; scroll with a mouse wheel or pinch with two fingers to zoom.">点选一条曲线，沿曲线拖动圆形手柄；进度条和键盘方向键可逐步查看采样构型。拖动空白处旋转视角；用鼠标滚轮或在触屏上双指捏合缩放。</dd>
-  <dt data-en="One branch per real closed curve">每条实闭曲线一个分支</dt><dd data-en="Each branch is one closed real curve: B1–B11 pass through the flat state, R1–R5 do not. Arcs that met at a junction only because they belong to the same curve are joined, so a branch can be dragged all the way round. With any of the drives h4, h12 and h13, each branch comes from exactly one seed; the seed number for the drive chosen below is shown with the branch name, and the panel also names the original arc (B4+, A23, …) at the current sample.">每个分支是一条实闭曲线：B1–B11 过平展态，R1–R5 不过平展态。同一条曲线上的几段弧在端点处已接好，整条分支可以一直拖动。以 h4、h12、h13 中任一根为驱动，每个分支恰好来自一个种子；分支名旁显示下方所选驱动下的种子编号，下方面板还给出当前采样点所在的原弧名（B4+、A23 等）。</dd>
+  <dt data-en="One branch per real closed curve">每条实闭曲线一个分支</dt><dd data-en="Each branch is one closed real curve: B1–B11 pass through the flat state, R1–R5 do not. A branch can be dragged all the way round. With any of the drives h4, h12 and h13, each branch comes from exactly one seed; the seed number for the drive chosen below is shown with the branch name.">每个分支是一条实闭曲线：B1–B11 过平展态，R1–R5 不过平展态。整条分支可以一直拖动。以 h4、h12、h13 中任一根为驱动，每个分支恰好来自一个种子；分支名旁显示下方所选驱动下的种子编号。</dd>
   <dt data-en="Switch paths at a junction">端点换支</dt><dd data-en="Select a junction, then choose a branch under Continue on. All branches at a junction share the same pose there.">点击端点，在“在此换支”中选择分支，从同一构型继续。同一端点上的各个分支接到同一个端点构型。</dd>
   <dt data-en="Crease pattern and merge sets">平面折痕图与合并集</dt><dd data-en="Below the path controls. The triangle bounded by h4, h12 and h13 is the fixed panel (yellow in the 3D view). It shows where h1–h13 are and, for the chosen drive, at which stage the selected path is found and which panels are merged.">位于路径控制下方。由 h4、h12、h13 围成的三角形是固定面板（三维构型图中的黄色面板）。图中标出 h1–h13 的位置，并对所选驱动给出当前路径在哪个阶段求得、哪些面板被合并。</dd>
   <dt data-en="Periodic boundaries">周期边界</dt><dd data-en="On R5, h₁ and h₅ stay at 180°, drawn as +180° or −180°, so the branch appears on four edges with the same poses. Other branches that cross ±180° continue on the opposite face of the box.">R5 上 h₁、h₅ 恒为 180°，可画成 +180° 或 −180°，因此出现在四条边上，各边为同一组构型。其他分支越过 ±180° 时从方框对面继续。</dd></dl>
@@ -431,8 +431,8 @@ function drawPattern(){
           (f.stage==="B"?"θ = 0":"θ = 180°")+" fibre: "+patternDrive+" held at "+(f.stage==="B"?"0°":"180°")+", drive h"+second);
     const ms=f.merge.length?[0,180].filter(v=>f.merge.some(m=>m[1]===v)).map(v=>"<code>{"+f.merge.filter(m=>m[1]===v).map(m=>"h"+m[0]).join(", ")+"} = "+v+"°</code>").join(" ")
       :tr("无（原系统的非奇异解）","none (nonsingular solution of the original system)");
-    const sd=seedOf(p),oa=oldArcAt(p,state.index);
-    html="<b>"+p.arc.id+"</b> · "+st+"<br>"+tr("合并集：","Merge set: ")+ms+(sd?"<br>"+tr("种子：","Seed: ")+"<code>"+sd.system+tr(" 种子 "," seed ")+sd.seed+"</code>":"")+"<br>"+tr("当前采样点在原弧 ","This sample lies on the original arc ")+"<code>"+oa+"</code>"+tr(" 上（本分支由 "," (this branch joins ")+p.arc.arcs_old.join(", ")+tr(" 组成）",")");
+    const sd=seedOf(p);
+    html="<b>"+p.arc.id+"</b> · "+st+"<br>"+tr("合并集：","Merge set: ")+ms+(sd?"<br>"+tr("种子：","Seed: ")+"<code>"+sd.system+tr(" 种子 "," seed ")+sd.seed+"</code>":"");
   }
   $("pattern-stage").innerHTML=html;
   const parts=[];for(let h=0;h<13;h++)parts.push("h"+(h+1)+" "+signAngle(col(row,h)));
