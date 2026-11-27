@@ -56,11 +56,11 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
 @media(max-width:760px){.pattern-grid{grid-template-columns:1fr}#pattern{max-width:440px;margin:auto}}
 .bare .pattern-text{display:none}.bare .pattern-grid{grid-template-columns:minmax(0,440px);justify-content:center}
 </style>
-<style>.xlink{color:var(--accent);font-size:.86rem;text-decoration:none;border:1px solid var(--line);border-radius:5px;padding:3px 8px;background:#fff}.xlink:hover{background:var(--tint)}@media(max-width:640px){.xlink{font-size:.72rem;padding:2px 5px}}</style></head>
+<style>.xnav{font:inherit;font-size:.86rem;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff;max-width:14em}@media(max-width:640px){.xnav{font-size:.72rem;max-width:8.5em;padding:2px 3px}}</style></head>
 <body>
 <header class="mast"><div class="wrap mast-inner">
   <div class="identity"><span class="fold-mark" aria-hidden="true"><i></i><b></b><em></em></span>Fold Atlas</div>
-  <div class="header-actions"><a class="xlink" href="dmv3/" data-en="Example: two vertices + off-line vertex">例子：双顶点 + 离线顶点</a>
+  <div class="header-actions"><select class="xnav" aria-label="切换算例" data-en-label="Switch example" onchange="location.href=this.value"><option value="./" selected data-en="Modified square twist">Modified square twist</option><option value="dmv3/" data-en="Two vertices + off-line vertex">双顶点 + 离线顶点</option><option value="miura-dmv/" data-en="Double Miura vertex">双 Miura 顶点</option></select>
     <select id="language" aria-label="界面语言 / Language"><option value="zh-CN" lang="zh-CN">中文</option><option value="en" lang="en">English</option></select>
     <button id="help" class="help"><span aria-hidden="true">?</span><span data-en="About">说明</span></button>
   </div>
