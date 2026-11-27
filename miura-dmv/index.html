@@ -68,7 +68,7 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
 <body>
 <header class="mast"><div class="wrap mast-inner">
   <div class="identity"><span class="fold-mark" aria-hidden="true"><i></i><b></b><em></em></span>Fold Atlas</div>
-  <div class="header-actions"><select class="xnav" aria-label="切换算例" data-en-label="Switch example" onchange="location.href=this.value"><option value=".././" data-en="Modified square twist">Modified square twist</option><option value="../dmv3/" data-en="Two vertices + off-line vertex">双顶点 + 离线顶点</option><option value="../miura-dmv/" selected data-en="Double Miura vertex">双 Miura 顶点</option></select>
+  <div class="header-actions"><select class="xnav" aria-label="切换算例" data-en-label="Switch example" onchange="location.href=this.value"><option value=".././" data-en="Modified square twist">Modified square twist</option><option value="../dmv3/" data-en="Two vertices + off-line vertex">双顶点 + 离线顶点</option><option value="../miura-dmv/" selected data-en="Double Miura vertex">双 Miura 顶点</option><option value="../miura-3x3/" data-en="3×3 Miura">3×3 Miura</option></select>
     <select id="language" aria-label="界面语言 / Language"><option value="zh-CN" lang="zh-CN">中文</option><option value="en" lang="en">English</option></select>
     <button id="help" class="help"><span aria-hidden="true">?</span><span data-en="About">说明</span></button>
   </div>
@@ -207,8 +207,17 @@ const SHEETS=(data.sheets||[]).map((s,si)=>{
   s.copies=per.some(x=>x)?[180,-180]:[null];
   s.xyz=s.copies.map(c=>Array.from({length:N},(_,k)=>AXES.map((h,a)=>per[a]?c:col(row(k),h))));
   s.color=SHEET_COLORS[si%SHEET_COLORS.length];return s;});
-for(const site of sites){site.sheetHits=[];
-  for(const s of SHEETS)s.xyz.forEach((arr,c)=>arr.forEach((v,k)=>{if(near(v,site.xyz))site.sheetHits.push({s,i:Math.floor(k/s.n),j:k%s.n,c});}));}
+// 端点在面上的位置：有 site.row 时按全部折角比对（±180 视为同一角度，与路径图坐标轴无关），否则按路径图坐标
+const wrapd=x=>((x%360)+540)%360-180;
+function computeSheetHits(site){site.sheetHits=[];
+  if(site.row==null){for(const s of SHEETS)s.xyz.forEach((arr,c)=>arr.forEach((v,k)=>{if(near(v,site.xyz))site.sheetHits.push({s,i:Math.floor(k/s.n),j:k%s.n,c});}));return;}
+  for(const s of SHEETS){const N=s.n*s.n;
+    for(let q=0;q<N;q++){const r=s.offset+q;let ok=true;
+      for(let h=0;h<NH;h++)if(Math.abs(wrapd(col(r,h)-col(site.row,h)))>0.5){ok=false;break;}
+      if(!ok)continue;let c=0,bd=1e9;
+      s.xyz.forEach((arr,cc)=>{const d=Math.max(...arr[q].map((v,a)=>Math.abs(v-site.xyz[a])));if(d<bd){bd=d;c=cc;}});
+      site.sheetHits.push({s,i:Math.floor(q/s.n),j:q%s.n,c});}}}
+for(const site of sites)computeSheetHits(site);
 function sheetRow(){const t=state.sheet;return t.s.offset+t.i*t.s.n+t.j;}
 function sheetTip(){const t=state.sheet;return t.s.screen[t.c][t.i*t.s.n+t.j];}
 function pickSheet(xy,r,only){
@@ -293,10 +302,10 @@ function refreshSheet(){
   $("status").textContent=crossing?tr("面板穿透","Panels cross"):tr("无内部穿透","No interior crossing");$("status").dataset.state=crossing;
   $("drive-label").textContent="h"+(s.ax[0]+1)+" · h"+(s.ax[1]+1);$("drive-value").textContent=signAngle(col(row,s.ax[0]))+" "+signAngle(col(row,s.ax[1]));
   selector.value=s.id;$("percent").textContent="";
-  state.join=sites.find(site=>site.sheetHits.some(h=>h.s===s&&h.i===t.i&&h.j===t.j&&h.c===t.c))||null;
+  state.join=sites.find(site=>site.sheetHits.some(h=>h.s===s&&h.i===t.i&&h.j===t.j))||null;
   lastJoinKey="";$("join-buttons").replaceChildren();$("joins").hidden=!state.join;
   if(state.join){$("join-title").textContent=state.join.id;const seen=new Set();
-    for(const h of state.join.hits){if(seen.has(h.p.arc.id))continue;seen.add(h.p.arc.id);
+    for(const h of sites.filter(x=>x.id===state.join.id).flatMap(x=>x.hits)){if(seen.has(h.p.arc.id))continue;seen.add(h.p.arc.id);
       const b=document.createElement("button");b.textContent=h.p.arc.id;b.onclick=()=>{stop();select(h.p,h.i);};$("join-buttons").append(b);}
     if(!seen.size)$("joins").hidden=true;}
   $("sheet-info").innerHTML="<b>"+s.id+"</b> · "+tr(s.desc[0],s.desc[1])+"<br>"+"h"+(s.ax[0]+1)+" = "+signAngle(col(row,s.ax[0]))+"，h"+(s.ax[1]+1)+" = "+signAngle(col(row,s.ax[1]));
@@ -505,7 +514,7 @@ function refresh(){
         button.onclick=()=>{const h=choices[0];stop();if(!visible(h.p))setGroup("all",false);select(h.p,h.i);};$("join-buttons").append(button);
       }
     }
-    if(state.join&&state.join.sheetHits.length){const h=state.join.sheetHits[0],b=document.createElement("button");b.textContent=h.s.id;b.onclick=()=>{stop();selectSheet(h.s,h.i,h.j,h.c);};$("join-buttons").append(b);}
+    const shs=state.join?sites.filter(x=>x.id===state.join.id).flatMap(x=>x.sheetHits):[];if(shs.length){const h=shs[0],b=document.createElement("button");b.textContent=h.s.id;b.onclick=()=>{stop();selectSheet(h.s,h.i,h.j,h.c);};$("join-buttons").append(b);}
     if(state.join&&!$("join-buttons").children.length)$("joins").hidden=true;
   }
   drawPattern();drawGraph();drawModel();
@@ -567,7 +576,7 @@ function drawPattern(){
       :tr("无（原系统的非奇异解）","none (nonsingular solution of the original system)");
     html="<b>"+p.arc.id+"</b>"+((p.arc.segs||[]).length>1?tr("（此处为种子 ","(this sample is on seed ")+seedAt(p,state.index)+tr("）",")"):"")+" · "+st+"<br>"+tr("合并集：","Merge set: ")+ms+(p.arc.nullity?"<br>"+tr("沿此分支雅可比多余零度 ","Extra Jacobian nullity along this branch: ")+p.arc.nullity:"")+(p.arc.seed_intervals?"<br>"+(p.arc.seed_intervals.length>1?tr("h4 实区间：","Real h4 intervals: ")+p.arc.seed_intervals.map(([n,a,b])=>n+" "+a+"° → "+b+"°").join(tr("，在转折点接 ",", joined at a turning point to ")):tr("每个 h4 都为实（单种子闭曲线）","Real for every h4 (one-seed closed curve)")):"");
   }
-  if(state.sheet&&f){const sh=state.sheet.s;html="<b>"+sh.id+"</b> · "+tr("二维面（正维数分量）","2D sheet (positive-dimensional component)")+"<br>"+tr(sh.desc[0],sh.desc[1])+"<br>"+tr("求得于：","Found in: ")+"<code>"+f.label.replace(/ 扫描/g,tr(" 扫描"," swept"))+"</code>"+tr("（一维扫描中判为正维数，再加一根相邻折痕作第二个参数）"," (judged positive-dimensional in the one-parameter sweep; a second adjacent crease is then added as a parameter)")+"<br>"+tr("面的坐标：","Sheet coordinates: ")+"h"+(sh.ax[0]+1)+"、h"+(sh.ax[1]+1)+tr("；红线为在面上恒为 180° 的折痕","; red: creases held at 180° on the sheet");}
+  if(state.sheet&&f){const sh=state.sheet.s;html="<b>"+sh.id+"</b> · "+tr("二维面（正维数分量）","2D sheet (positive-dimensional component)")+"<br>"+tr(sh.desc[0],sh.desc[1])+"<br>"+tr("求得于：","Found in: ")+"<code>"+f.label.replace(/ 扫描/g,tr(" 扫描"," swept"))+"</code>"+tr("（一维扫描中判为正维数，再加一根相邻折痕作第二个参数）"," (judged positive-dimensional in the one-parameter sweep; a second adjacent crease is then added as a parameter)")+"<br>"+tr("面的坐标：","Sheet coordinates: ")+"h"+(sh.ax[0]+1)+"、h"+(sh.ax[1]+1)+tr("；红线为在面上保持恒定的折痕（标注其角度）","; red: creases held constant on the sheet (angle labelled)");}
   else if(f&&!state.none&&p.arc.desc)html=html.replace("</b>","</b>（"+tr(p.arc.desc[0],p.arc.desc[1])+"）");
   $("pattern-stage").innerHTML=html;
   const parts=[];for(let h=0;h<NH;h++)parts.push("h"+(h+1)+" "+signAngle(col(row,h)));
