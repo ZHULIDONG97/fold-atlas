@@ -287,7 +287,7 @@ pad.addEventListener("pointermove",e=>{if(padDrag===e.pointerId)padPick(e);});
 const padUp=e=>{if(padDrag===e.pointerId)padDrag=null;};pad.addEventListener("pointerup",padUp);pad.addEventListener("pointercancel",padUp);
 function refreshSheet(){
   const t=state.sheet,s=t.s,row=sheetRow(),xyz=s.xyz[t.c][t.i*s.n+t.j];
-  $("sheet-panel").hidden=false;slider.disabled=true;
+  $("sheet-panel").hidden=false;slider.disabled=true;document.querySelector(".transport").style.display="none";
   [0,1,2].forEach(k=>$("angle"+[1,5,9][k]).textContent=signAngle(xyz[k]));
   const crossing=col(row,CROSS);
   $("status").textContent=crossing?tr("面板穿透","Panels cross"):tr("无内部穿透","No interior crossing");$("status").dataset.state=crossing;
@@ -473,7 +473,7 @@ let lastJoinKey="";
 function deselect(){stop();state.none=true;state.sheet=null;graphLayer=null;refresh();}
 function refresh(){
   if(state.sheet&&!state.none){refreshSheet();return;}
-  $("sheet-panel").hidden=true;slider.disabled=false;
+  $("sheet-panel").hidden=true;slider.disabled=false;document.querySelector(".transport").style.display="";
   if(state.none){
     lastJoinKey="";state.join=null;$("joins").hidden=true;
     [1,5,9].forEach(k=>$("angle"+k).textContent="—");$("drive-value").textContent="—";$("percent").textContent="";
