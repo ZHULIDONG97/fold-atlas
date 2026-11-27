@@ -54,7 +54,8 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
 .pattern-key i.k-flat{border-top:2px dashed #8a9b92}
 .pattern-angles{font:.8rem/1.9 var(--mono);color:var(--muted);margin:6px 0 0}
 @media(max-width:760px){.pattern-grid{grid-template-columns:1fr}#pattern{max-width:440px;margin:auto}}
-#arc-choice{min-width:9.5em}</style>
+#arc-choice{min-width:9.5em}.bare .pattern-text{display:none}.bare .pattern-grid{grid-template-columns:minmax(0,440px);justify-content:center}
+</style>
 <style>.xlink{color:var(--accent);font-size:.86rem;text-decoration:none;border:1px solid var(--line);border-radius:5px;padding:3px 8px;background:#fff}.xlink:hover{background:var(--tint)}@media(max-width:640px){.xlink{font-size:.72rem;padding:2px 5px}}</style></head>
 <body>
 <header class="mast"><div class="wrap mast-inner">
@@ -236,13 +237,13 @@ function buildGraph() {
     stroke();ctx.setLineDash([]);
   };
   for(const p of paths){p.screen=p.xyz.map(projector);}
-  for(const p of paths.filter(visible)){if(p===state.path)continue;ctx.strokeStyle=p.color;ctx.globalAlpha=.87;ctx.lineWidth=1.5;drawPath(p);}
-  ctx.globalAlpha=1;ctx.strokeStyle="#007666";ctx.lineWidth=3;drawPath(state.path);
+  for(const p of paths.filter(visible)){if(p===state.path&&!state.none)continue;ctx.strokeStyle=p.color;ctx.globalAlpha=.87;ctx.lineWidth=1.5;drawPath(p);}
+  ctx.globalAlpha=1;if(!state.none){ctx.strokeStyle="#007666";ctx.lineWidth=3;drawPath(state.path);}
   for(const site of sites){site.screen=projector(site.xyz);if(site.hits.some(h=>visible(h.p)))site.turn?circle(ctx,...site.screen,3.4,"white","#56665c",1.3):circle(ctx,...site.screen,3.1,site.same?"#56665c":"white","#fff",.7);}
 }
 function drawGraph() {
   if(!graphLayer)buildGraph();
-  const {ctx,w,h}=canvasFrame(graph);ctx.drawImage(graphLayer,0,0,w,h);
+  const {ctx,w,h}=canvasFrame(graph);ctx.drawImage(graphLayer,0,0,w,h);if(state.none)return;
   const p=state.path,[x,y]=p.screen[state.index];
   circle(ctx,x,y,12,"#087b6724");circle(ctx,x,y,6.4,"white","#087664",2.4);circle(ctx,x,y,2.6,"#087664");
   const nm=(p.arc.segs||[]).length>1?p.arc.id.replace(" 小回路","")+" · "+tr("种子 ","seed ")+seedAt(p,state.index):p.arc.id;const title=state.join ? state.join.id+" · "+nm : nm;
@@ -287,7 +288,7 @@ function paintSorted(faces,eye,paint) {
 }
 function drawModel() {
   const {ctx,w,h}=canvasFrame(model), b=basis(cameras.model);
-  const X=vertices(state.path.order[state.index]);
+  const X=state.none?data.rest.map(v=>v.slice()):vertices(state.path.order[state.index]);
   const projected=X.map(v=>[dot(b.x,v),dot(b.y,v)]);
   const fc=data.faces[data.fixed].map(i=>data.rest[i]),c0=[0,1,2].map(k=>fc.reduce((t,v)=>t+v[k],0)/fc.length);
   const R=Math.max(...data.rest.map(v=>Math.hypot(v[0]-c0[0],v[1]-c0[1],v[2]-c0[2])));
@@ -344,7 +345,14 @@ function populateSelector(){
   }
 }
 let lastJoinKey="";
+function deselect(){stop();state.none=true;graphLayer=null;refresh();}
 function refresh(){
+  if(state.none){
+    lastJoinKey="";state.join=null;$("joins").hidden=true;
+    [1,5,9].forEach(k=>$("angle"+k).textContent="—");$("drive-value").textContent="—";$("percent").textContent="";
+    $("status").textContent=tr("未选中分支（平展态）","No branch selected (flat state)");$("status").dataset.state=0;selector.value="";
+    drawPattern();drawGraph();drawModel();return;
+  }
   const p=state.path,i=state.index,row=p.order[i],xyz=p.xyz[i];
   state.join=sites.find(s=>s.hits.some(h=>h.p===p && h.i===i))||null;
   [0,1,2].forEach((k)=>$("angle"+[1,5,9][k]).textContent=signAngle(xyz[k]));
@@ -395,7 +403,8 @@ function drawPattern(){
   document.querySelectorAll("[data-drive]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.drive===patternDrive)));
   svg.replaceChildren();
   const P=v=>[data.rest[v][0],-data.rest[v][1]];
-  const p=state.path,row=p.order[state.index],f=p.arc.found[patternDrive];
+  const p=state.path,row=p.order[state.index],f=state.none?null:p.arc.found[patternDrive];
+  $("pattern-panel").classList.toggle("bare",!!state.none);
   const dn=Number(patternDrive.slice(1));
   const param=f?f.param:dn, heldMap=new Map((f?f.held:[]).map(([h,v])=>[h-1,v])), held=heldMap.size?1:null;
   const merged=new Set((f?f.merge:[]).map(m=>m[0]));
@@ -409,7 +418,7 @@ function drawPattern(){
     fill:color[i]||(i%2?"#e4ece6":"#eef3ef"),stroke:"#8fa39a","stroke-width":.016},svg));
   const axisColor={[AXES[0]]:"#2f7188",[AXES[1]]:"#af6a41",[AXES[2]]:"#795d82"};
   data.edges.forEach(([a,b],h)=>{
-    const A=P(a),B=P(b),ang=col(row,h),flat=Math.abs(ang)<0.5,isParam=h===param-1,isHeld=heldMap.has(h);
+    const A=P(a),B=P(b),ang=col(row,h),flat=!state.none&&Math.abs(ang)<0.5,isParam=!state.none&&h===param-1,isHeld=heldMap.has(h);
     const c=isParam?"#087667":isHeld?"#c8323c":(axisColor[h]||"#49665b");
     svgEl("line",{x1:A[0],y1:A[1],x2:B[0],y2:B[1],stroke:c,"stroke-width":isParam||isHeld?.09:(h in axisColor?.05:.035),"stroke-linecap":"round",
       "stroke-dasharray":flat&&!isHeld?".1 .07":"none"},svg);
@@ -437,6 +446,7 @@ function drawPattern(){
 const distance3=(a,b)=>Math.hypot(...sub(a,b));
 function seedAt(p,i){const s=(p.arc.segs||[]).find(([a,b])=>i>=a&&i<=b);return s?s[2]:p.arc.id;}
 function select(p,i){
+  if(state.none){state.none=false;graphLayer=null;}
   if(state.path!==p){state.path=p;state.direction=1;graphLayer=null;}
   state.index=clamp(i,0,p.order.length-1);refresh();
 }
@@ -502,16 +512,16 @@ function installPointer(canvas,key) {
   function repaint(){if(graphMode){graphLayer=null;drawGraph();}else drawModel();}
   canvas.onpointerdown=e=>{
     if(e.button!==0||drag)return;
-    const xy=localPoint(e,canvas);let mode="orbit";stop();$("tooltip").hidden=true;
+    const xy=localPoint(e,canvas);let mode="orbit",toggle=false;stop();$("tooltip").hidden=true;
     if(graphMode){
       const tip=state.path.screen[state.index],limit=e.pointerType==="touch"?15:9;
-      if(Math.hypot(tip[0]-xy[0],tip[1]-xy[1])<=limit){mode="move";}
+      if(!state.none&&Math.hypot(tip[0]-xy[0],tip[1]-xy[1])<=limit){mode="move";toggle=true;}
       else{
         const s=nearestSite(xy,limit*.72),hit=s?onSite(s):pick(xy,limit);
-        if(hit){select(hit.p,hit.i);mode="move";}
+        if(hit){toggle=!state.none&&!s&&hit.p===state.path;select(hit.p,hit.i);mode="move";}
       }
     }
-    drag={id:e.pointerId,xy,mode};canvas.setPointerCapture(e.pointerId);
+    drag={id:e.pointerId,xy,mode,start:xy,toggle,moved:0};canvas.setPointerCapture(e.pointerId);
   };
   canvas.onpointermove=e=>{
     const xy=localPoint(e,canvas);
@@ -525,7 +535,7 @@ function installPointer(canvas,key) {
       }else{
         const camera=cameras[key];camera.az-=(xy[0]-drag.xy[0])*.45;camera.el=clamp(camera.el+(xy[1]-drag.xy[1])*.4,-82,82);repaint();
       }
-      drag.xy=xy;
+      drag.moved=Math.max(drag.moved,Math.hypot(xy[0]-drag.start[0],xy[1]-drag.start[1]));drag.xy=xy;
     }else if(graphMode && !drag && e.pointerType!=="touch"){
       const s=nearestSite(xy,6),hit=s?null:pick(xy,6),tt=$("tooltip");
       tt.hidden=!s&&!hit;canvas.style.cursor=s||hit?"pointer":"grab";
@@ -533,7 +543,7 @@ function installPointer(canvas,key) {
     }
   };
   canvas.onpointerleave=()=>{$("tooltip").hidden=true;};
-  canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=e=>{if(drag?.id===e.pointerId)drag=null;};
+  canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=e=>{if(drag?.id===e.pointerId){const d=drag;drag=null;if(e.type==="pointerup"&&d.toggle&&d.moved<4)deselect();}};
   canvas.addEventListener("wheel",e=>{e.preventDefault();cameras[key].zoom=clamp(cameras[key].zoom*Math.exp(-e.deltaY*.0012),.55,3.2);repaint();},{passive:false});
   $(key+"-reset").onclick=()=>{const [az,el]=initialCamera[key];cameras[key]={az,el,zoom:1};repaint();};
 }
