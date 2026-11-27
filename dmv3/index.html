@@ -59,8 +59,7 @@ dialog{width:min(760px,92vw);max-height:86vh;overflow:auto}
 <body>
 <header class="mast"><div class="wrap mast-inner">
   <div class="identity"><span class="fold-mark" aria-hidden="true"><i></i><b></b><em></em></span>Fold Atlas</div>
-  <div class="header-actions">
-    <a class="xlink" href="../" data-en="Example: modified square twist">例子：Modified square twist</a>
+  <div class="header-actions"><a class="xlink" href="../" data-en="Example: modified square twist">例子：Modified square twist</a>
     <select id="language" aria-label="界面语言 / Language"><option value="zh-CN" lang="zh-CN">中文</option><option value="en" lang="en">English</option></select>
     <button id="help" class="help"><span aria-hidden="true">?</span><span data-en="About">说明</span></button>
   </div>
@@ -246,7 +245,7 @@ function drawGraph() {
   const {ctx,w,h}=canvasFrame(graph);ctx.drawImage(graphLayer,0,0,w,h);
   const p=state.path,[x,y]=p.screen[state.index];
   circle(ctx,x,y,12,"#087b6724");circle(ctx,x,y,6.4,"white","#087664",2.4);circle(ctx,x,y,2.6,"#087664");
-  const nm=(p.arc.segs||[]).length>1?p.arc.id+" · "+tr("种子 ","seed ")+seedAt(p,state.index):p.arc.id;const title=state.join ? state.join.id+" · "+nm : nm;
+  const nm=(p.arc.segs||[]).length>1?p.arc.id.replace(" 小回路","")+" · "+tr("种子 ","seed ")+seedAt(p,state.index):p.arc.id;const title=state.join ? state.join.id+" · "+nm : nm;
   ctx.font="600 12px Consolas,monospace";const ww=ctx.measureText(title).width+15;
   const tx=clamp(x+10,3,w-ww-3),ty=clamp(y-27,2,h-24);
   ctx.fillStyle="#125c51";ctx.beginPath();ctx.roundRect(tx,ty,ww,21,4);ctx.fill();
@@ -530,7 +529,7 @@ function installPointer(canvas,key) {
     }else if(graphMode && !drag && e.pointerType!=="touch"){
       const s=nearestSite(xy,6),hit=s?null:pick(xy,6),tt=$("tooltip");
       tt.hidden=!s&&!hit;canvas.style.cursor=s||hit?"pointer":"grab";
-      if(!tt.hidden){tt.textContent=s?(s.turn?s.id+" "+tr("转折点","turning point"):s.id):hit.p.arc.id+((hit.p.arc.segs||[]).length>1?" · "+seedAt(hit.p,hit.i):"");tt.style.left=clamp(xy[0]+12,0,canvas.clientWidth-60)+"px";tt.style.top=clamp(xy[1]+10,0,canvas.clientHeight-27)+"px";}
+      if(!tt.hidden){tt.textContent=s?(s.turn?s.id+" "+tr("转折点","turning point"):s.id):hit.p.arc.id.replace(" 小回路","")+((hit.p.arc.segs||[]).length>1?" · "+seedAt(hit.p,hit.i):"");tt.style.left=clamp(xy[0]+12,0,canvas.clientWidth-60)+"px";tt.style.top=clamp(xy[1]+10,0,canvas.clientHeight-27)+"px";}
     }
   };
   canvas.onpointerleave=()=>{$("tooltip").hidden=true;};

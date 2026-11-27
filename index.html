@@ -440,7 +440,7 @@ function drawPattern(){
 }
 const distance3=(a,b)=>Math.hypot(...sub(a,b));
 function seedOf(p){return p.arc.seeds?p.arc.seeds[patternDrive]:null;}
-function branchName(p){const sd=seedOf(p);return sd?p.arc.id+" · "+patternDrive+" "+tr("种子 ","seed ")+sd.seed:p.arc.id;}
+function branchName(p){const sd=seedOf(p);return sd?p.arc.id+" · "+tr("种子 ","seed ")+sd.seed:p.arc.id;}
 function oldArcAt(p,i){const s=(p.arc.segs||[]).find(([a,b])=>i>=a&&i<=b);return s?s[2]:"";}
 function select(p,i){
   if(state.path!==p){state.path=p;state.direction=1;graphLayer=null;}
